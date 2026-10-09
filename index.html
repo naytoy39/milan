@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Милан за два дня</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+/* Layout: guidebook spread. Map on the left, the itinerary on the right as a list that opens into a stop card.
+   Day 1 is tram-orange (Milan's old trams), Day 2 canal-teal (the Navigli). */
+:root{
+  --bg:#f3eff0; --paper:#fdfbfb; --ink:#1e1a20; --muted:#6b6470; --rule:#e2dadd; --soft:#ece5e8;
+  --d1:#d97e00; --d2:#16808a; --red:#b3203a; --free:#2f7d4f;
+  --f-disp:"Bodoni Moda","Didot","Bodoni 72",Georgia,serif;
+  --f-ui:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141215; --paper:#1c191d; --ink:#efe9ec; --muted:#a69ca8; --rule:#322c33; --soft:#262126;
+  --d1:#f0a23a; --d2:#4cc0c8; --red:#ff6b81; --free:#6fd39a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141215; --paper:#1c191d; --ink:#efe9ec; --muted:#a69ca8; --rule:#322c33; --soft:#262126;
+  --d1:#f0a23a; --d2:#4cc0c8; --red:#ff6b81; --free:#6fd39a; color-scheme:dark}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);overflow:hidden}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 430px}
+#map{min-height:0;background:#e9e4dc}
+.panel{background:var(--paper);border-left:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
+.head{padding:18px 20px 12px;border-bottom:1px solid var(--rule)}
+.head .kick{font:600 11px var(--f-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.head h1{margin:4px 0 6px;font:700 34px/1.02 var(--f-disp);letter-spacing:-.01em}
+.head h1 em{font-style:italic;font-weight:500}
+.facts{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.facts b{color:var(--ink);font-weight:600}
+.days{display:flex;gap:6px;padding:10px 20px;border-bottom:1px solid var(--rule)}
+.days button{font:600 13px var(--f-ui);padding:6px 12px;border-radius:999px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.days button i{width:10px;height:10px;border-radius:50%}
+.days button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.scroll{flex:1;min-height:0;overflow:auto}
+.dayh{display:flex;align-items:baseline;gap:10px;padding:16px 20px 6px}
+.dayh h2{margin:0;font:700 20px var(--f-disp)}
+.dayh span{font-size:12.5px;color:var(--muted)}
+ol.stops{list-style:none;margin:0;padding:0 10px 8px}
+.stops button{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:none;border:0;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--ink);font:inherit}
+.stops button:hover{background:var(--soft)}
+.stops button[aria-current="true"]{background:var(--soft)}
+.num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-ui);color:#fff;font-variant-numeric:tabular-nums}
+.nm{min-width:0}
+.nm b{display:block;font-weight:600;font-size:14.5px;line-height:1.25}
+.nm small{display:block;color:var(--muted);font-size:12px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font:600 11.5px var(--f-ui);padding:3px 8px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag.free{color:var(--free);background:color-mix(in srgb,var(--free) 12%,transparent)}
+.tag.paid{color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent)}
+.note{margin:6px 20px 20px;font-size:12px;color:var(--muted);line-height:1.5}
+
+/* stop card */
+.card{padding:16px 20px 24px;display:flex;flex-direction:column;gap:14px}
+.nav{display:flex;gap:8px;align-items:center}
+.nav button{font:600 13px var(--f-ui);padding:6px 11px;border-radius:8px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer}
+.nav button:disabled{opacity:.35;cursor:default}
+.nav .sp{flex:1}
+.card .top{display:flex;gap:12px;align-items:flex-start}
+.card .top .num{width:40px;height:40px;font-size:16px;flex:0 0 auto}
+.card h2{margin:0;font:700 25px/1.12 var(--f-disp);text-wrap:balance}
+.card .it{margin:3px 0 0;font:italic 500 15px var(--f-disp);color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.meta span{font-size:12.5px;padding:4px 9px;border-radius:7px;background:var(--soft);color:var(--ink)}
+.sec h3{margin:0 0 5px;font:600 11px var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sec p{margin:0;font-size:15px;line-height:1.6;max-width:62ch}
+.price{border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
+.price p{font-size:14px}
+.tip{border-radius:10px;padding:12px 14px;background:color-mix(in srgb,var(--dc) 11%,transparent);border-left:3px solid var(--dc)}
+.tip p{font-size:14.5px}
+.card a{color:var(--red);font-weight:600;font-size:13.5px}
+button:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+/* map */
+.pin{width:28px;height:28px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.35);border:2px solid #fff}
+.pin span{transform:rotate(45deg);color:#fff;font:700 12px "Instrument Sans",system-ui,sans-serif}
+.pin.on{width:36px;height:36px;box-shadow:0 0 0 4px rgba(179,32,58,.35),0 2px 6px rgba(0,0,0,.4)}
+.pin.on span{font-size:14px}
+.pin.dim{opacity:.35}
+.mapnote{cursor:pointer;position:absolute;left:12px;bottom:24px;z-index:500;background:var(--paper);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);max-width:300px;line-height:1.4}
+.slbl{background:none;border:0;box-shadow:none;font:italic 600 12px "Bodoni Moda",Georgia,serif;color:#5d5560;padding:0}
+.slbl::before{display:none}
+.leaflet-container{font-family:var(--f-ui)}
+.leaflet-tooltip.tt{font:600 12.5px var(--f-ui);padding:3px 7px;border-radius:6px}
+
+@media (max-width:820px){
+  .mapnote{font-size:11px;max-width:220px;padding:5px 8px;bottom:22px}
+  .app{grid-template-columns:1fr;grid-template-rows:minmax(0,44%) minmax(0,56%)}
+  .panel{border-left:0;border-top:1px solid var(--rule)}
+  .head{padding:12px 16px 8px}.head h1{font-size:26px}
+  .days{padding:8px 16px}.dayh{padding:12px 16px 4px}.card{padding:12px 16px 20px}.note{margin:6px 16px 16px}
+}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <div id="map" aria-label="Карта маршрута по Милану" style="position:relative"></div>
+  <aside class="panel">
+    <div class="head">
+      <div class="kick">Пешеходный маршрут · 21 точка</div>
+      <h1>Милан <em>за два дня</em></h1>
+      <div class="facts" id="facts"></div>
+    </div>
+    <div class="days" role="group" aria-label="Показать день">
+      <button data-d="0" aria-pressed="true">Весь маршрут</button>
+      <button data-d="1" aria-pressed="false"><i style="background:var(--d1)"></i>День 1</button>
+      <button data-d="2" aria-pressed="false"><i style="background:var(--d2)"></i>День 2</button>
+    </div>
+    <div class="scroll" id="scroll"></div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const STOPS=[{"day":1,"name":"Дуомо — Миланский собор","it":"Duomo di Milano","ll":[45.4642,9.1916],"time":"1,5–2 ч","hist":"Собор начали строить в 1386 году по воле герцога Джан Галеаццо Висконти, а фасад закончили только при Наполеоне, в начале XIX века: в 1805 году он короновался здесь королём Италии. Это одна из крупнейших готических церквей мира: на крышах и фасаде около 3400 статуй и 135 шпилей. Собор целиком облицован розовато-белым мрамором из карьеров Кандольи у озера Маджоре — ими до сих пор владеет Veneranda Fabbrica, организация, которая строит и чинит собор с XIV века. На главном шпиле на высоте 108,5 м стоит позолоченная Мадоннина (1774), символ Милана.","price":"Собор + музей — 10 €; вместе с террасами: по лестнице — 22 €, на лифте — 26 €. Билеты на официальном сайте, плюс сбор 1–1,5 €.","paid":true,"cost":22,"tip":"Поднимайтесь на террасы ближе к закату: мрамор розовеет, а среди шпилей легко найти неожиданного «боксёра» — статую XX века. Внутри у входа в пол врезана латунная меридиана 1786 года: в солнечный полдень на неё падает луч из отверстия в своде.","site":"https://www.duomomilano.it/"},{"day":1,"name":"Музей XX века (Новеченто)","it":"Museo del Novecento","ll":[45.4632,9.1899],"time":"1–1,5 ч","hist":"Музей открылся в 2010 году во дворце Аренгарио, построенном в 1930-е годы на площади Дуомо. Здесь итальянское искусство XX века: футуристы (Боччони, Балла, Карра), метафизика де Кирико, Моранди, Фонтана. По пандусу у входа вы проходите мимо огромного полотна «Четвёртое сословие» Пеллиццы да Вольпедо (1901) — одной из самых известных картин о рабочем движении.","price":"10 € (с 10 мая 2026); в первое воскресенье месяца бесплатно. Годовая Milano Museo Card за 15 € даёт вход во все городские музеи, включая Сфорцеско.","paid":true,"cost":10,"tip":"Дойдите до последнего зала с неоновой спиралью Лучо Фонтаны: из его панорамного окна открывается, пожалуй, лучший вид на фасад Дуомо с высоты, без очереди на крышу.","site":"https://www.museodelnovecento.org/"},{"day":1,"name":"Галерея Виктора Эммануила II","it":"Galleria Vittorio Emanuele II","ll":[45.4657,9.19],"time":"30 мин","hist":"Крытый пассаж из стекла и железа построили в 1865–1877 годах по проекту Джузеппе Менгони; архитектор погиб, упав с лесов, за несколько дней до торжественного открытия. В плане это крест с восьмиугольной площадью под стеклянным куполом высотой около 47 м; мозаики на полу и в люнетах изображают части света и гербы итальянских городов. Здесь с 1913 года работает первый магазин Prada, а с 1915-го — бар Camparino.","price":"Бесплатно.","paid":false,"cost":0,"tip":"В центре на полу — мозаичный бык, герб Турина. По примете надо крутануться на пятке на определённом месте мозаики, чтобы вернуться в Милан; вы сразу увидите, где — там стёртая ямка и небольшая очередь.","site":""},{"day":1,"name":"Театр Ла Скала и его музей","it":"Teatro alla Scala","ll":[45.4674,9.1895],"time":"45 мин","hist":"Театр построил архитектор Джузеппе Пьермарини после пожара старого придворного театра; открыт 3 августа 1778 года оперой Сальери. Название — от церкви Санта-Мария-алла-Скала, стоявшей на этом месте. Здесь впервые прозвучали «Набукко» и «Отелло» Верди, «Мадам Баттерфляй» Пуччини. В 1943 году здание разбомбили, а в 1946-м оно вновь открылось концертом Артуро Тосканини. Новый сезон традиционно начинается 7 декабря, в день святого Амвросия.","price":"Музей театра — 12 € (льготный 8 €).","paid":true,"cost":12,"tip":"Из музея можно заглянуть в зрительный зал через ложу — но только когда нет репетиции. Лучше всего идти к открытию, в 9:30: утром ложи чаще открыты.","site":"https://www.museoscala.org/"},{"day":1,"name":"Музей Польди-Пеццоли","it":"Museo Poldi Pezzoli","ll":[45.4685,9.1925],"time":"1 ч","hist":"Дом-музей аристократа и коллекционера Джан Джакомо Польди-Пеццоли (1822–1879), который завещал свою коллекцию городу; музей открылся в 1881 году. После бомбардировки 1943 года залы восстановили к 1951-му. Главная звезда — «Портрет молодой женщины» работы Пьеро дель Поллайоло, ставший эмблемой музея; рядом Боттичелли, Мантенья, Пьеро делла Франческа.","price":"15 € (молодёжь 10–25 лет — 10 €); выходной — вторник.","paid":true,"cost":15,"tip":"Не пропустите оружейный зал: его в 2000 году заново оформил скульптор Арнальдо Помодоро. Музей маленький и тихий — идеальная пауза после толп у Дуомо.","site":"https://museopoldipezzoli.it/"},{"day":1,"name":"Виа Монтенаполеоне — «Золотой квадрат»","it":"Via Montenapoleone","ll":[45.4685,9.1955],"time":"30–40 мин","hist":"Улица названа в честь Монте Наполеоне — государственного финансового учреждения наполеоновской эпохи, которое вело дела по государственному долгу. Вместе с виа делла Спига, виа Мандзони и корсо Венеция она образует Quadrilatero della moda — «модный квадрат» с флагманскими бутиками мировых домов моды, которые разместились в старинных палаццо.","price":"Бесплатно (если только не начнёте покупки).","paid":false,"cost":0,"tip":"Загляните в кондитерскую Cova (основана в 1817 году у Ла Скала, сюда переехала в 1950-м) — кофе у стойки стоит заметно дешевле, чем за столиком. Через квартал, на виа Джезу, — тихий дом-музей Баготти-Вальсекки, если останутся силы.","site":""},{"day":1,"name":"Пинакотека Брера","it":"Pinacoteca di Brera","ll":[45.4719,9.1879],"time":"2 ч","hist":"Палаццо Брера был иезуитской коллегией; в 1776 году Мария Терезия основала здесь Академию изящных искусств, а в 1809-м при Наполеоне открылась картинная галерея — в неё свозили шедевры из закрытых церквей и монастырей. Здесь «Мёртвый Христос» Мантеньи, «Обручение Девы Марии» Рафаэля, «Ужин в Эммаусе» Караваджо и «Поцелуй» Айеца. Во дворе стоит бронзовый Наполеон в образе Марса-Миротворца по модели Кановы.","price":"Билет «Grande Brera» (пинакотека + палаццо Читтерио) — 20 €, 18–25 лет — 4 €, до 18 бесплатно. Первое воскресенье месяца бесплатно по брони. Выходной — понедельник.","paid":true,"cost":20,"tip":"После музея пройдите во внутренний Ботанический сад Бреры (вход бесплатный) — зелёный уголок, о котором знают немногие туристы. Вечером узкие улочки Бреры — одно из лучших мест для ужина.","site":"https://pinacotecabrera.org/"},{"day":1,"name":"Замок Сфорца","it":"Castello Sforzesco","ll":[45.4705,9.1795],"time":"1,5 ч","hist":"Крепость заложили Висконти в XIV веке, а с 1450 года Франческо Сфорца перестроил её в герцогскую резиденцию; при его сыне Лодовико Моро здесь работали Леонардо да Винчи и Браманте. Центральную башню Филарете пришлось строить заново (1900–1905): в XVI веке она взлетела на воздух из-за пороха, хранившегося внутри. Сегодня в замке городские музеи: зал Ассе с росписью Леонардо и «Пьета Ронданини» — последняя, незаконченная работа Микеланджело.","price":"Дворы и парк — бесплатно; музеи замка — 10 € (с 10 мая 2026), первое воскресенье месяца бесплатно.","paid":true,"cost":10,"tip":"Даже если не пойдёте в музеи, пройдите насквозь все три двора к парку. А если пойдёте — начните с «Пьеты Ронданини»: её выставляют отдельно, в бывшем испанском госпитале замка.","site":"https://www.milanocastello.it/"},{"day":1,"name":"Парк Семпионе и Арка Мира","it":"Parco Sempione · Arco della Pace","ll":[45.4757,9.1726],"time":"40 мин","hist":"Парк в английском стиле разбил Эмилио Алеманья в 1888–1894 годах на месте охотничьих угодий Сфорца и военного плаца. Арку Мира начал Луиджи Каньола в 1807 году в честь побед Наполеона, а закончили уже при австрийцах в 1838-м и посвятили миру 1815 года. Над парком поднимается башня Бранка (1933, Джо Понти) высотой 108 м.","price":"Бесплатно (подъём на башню Бранка — платно).","paid":false,"cost":0,"tip":"Возле Триеннале спрятан фонтан «Таинственные купальни» Джорджо де Кирико (1973) — странные полосатые купальщики на воде. Для детей и просто на отдых — лучший зелёный привал первого дня.","site":""},{"day":1,"name":"Монументальное кладбище","it":"Cimitero Monumentale","ll":[45.4855,9.1795],"time":"1 ч","hist":"Кладбище открыли в 1866 году по проекту Карло Мачакини — в эклектичном стиле с полосатыми фасадами. Это настоящий музей скульптуры под открытым небом: здесь работали Медардо Россо, Адольфо Вильдт, Джо Понти. В центральном Фамедио («храме славы») похоронен писатель Алессандро Мандзони и увековечены знаменитые миланцы.","price":"Бесплатно; выходной — понедельник.","paid":false,"cost":0,"tip":"Возьмите у входа бесплатную схему и найдите гробницу семьи Кампари — с бронзовой «Тайной вечерей» в натуральную величину. Это тихое, красивое и совсем не мрачное место.","site":""},{"day":1,"name":"Порта-Нуова: площадь Гэ Ауленти и «Вертикальный лес»","it":"Piazza Gae Aulenti · Bosco Verticale","ll":[45.4848,9.1903],"time":"40 мин","hist":"Новый деловой квартал вырос в 2009–2014 годах на месте пустырей и железнодорожных путей. Круглая площадь носит имя архитектора Гэ Ауленти; над ней — башня UniCredit высотой 231 м со шпилем, самое высокое здание Италии. Рядом — «Вертикальный лес» Стефано Боэри (2014): два жилых дома, на балконах которых растут около 800 деревьев и тысячи кустарников.","price":"Бесплатно.","paid":false,"cost":0,"tip":"Вернитесь сюда к вечеру: подсветка башен и фонтаны на площади — самая «современная» открытка Милана. Рядом парк Biblioteca degli Alberi, где удобно посидеть.","site":""},{"day":2,"name":"Санта-Мария-делле-Грацие и «Тайная вечеря»","it":"Santa Maria delle Grazie · Cenacolo","ll":[45.4659,9.1709],"time":"45 мин","hist":"Церковь доминиканцев построили в 1463–1490-х годах; герцог Лодовико Моро поручил Браманте возвести новую апсиду с куполом. В трапезной монастыря Леонардо в 1495–1498 годах написал «Тайную вечерю» — темперой по сухой штукатурке, поэтому краска стала осыпаться ещё при его жизни. В 1943 году бомба разрушила трапезную, но стену с фреской спасли мешки с песком. Последняя большая реставрация длилась с 1978 по 1999 год; с 1980 года это объект ЮНЕСКО.","price":"15 € (18–25 лет — 2 €, до 18 бесплатно), только по предварительной брони; сеанс 15 минут. Первое воскресенье месяца бесплатно. Выходной — понедельник.","paid":true,"cost":15,"tip":"Это единственная точка маршрута, которую нужно планировать заранее: билеты выкладывают на сайте раз в три месяца, и они разлетаются быстро. Если не успели, ищите экскурсию с гидом, в которую уже включён вход. Саму церковь с куполом Браманте можно посмотреть бесплатно.","site":"https://cenacolovinciano.org/"},{"day":2,"name":"Музей науки и техники им. Леонардо","it":"Museo Nazionale della Scienza e della Tecnologia","ll":[45.4628,9.1715],"time":"1,5–2 ч","hist":"Музей открылся в 1953 году к 500-летию Леонардо в бывшем монастыре Сан-Витторе-аль-Корпо XVI века. Здесь крупнейшая коллекция моделей машин по рисункам Леонардо, паровозы, корабли, авиация и космос. Во дворе стоит настоящая подводная лодка «Энрико Тоти» — первая подлодка, построенная в Италии после Второй мировой войны (спущена в 1967 году).","price":"Около 13 €; экскурсия в подводную лодку — ещё около 10 € по брони. Выходной — понедельник.","paid":true,"cost":13,"tip":"Если интересна подлодка — бронируйте слот на неё онлайн сразу, мест немного. С детьми этот музей можно поставить и вместо пинакотеки.","site":"https://www.museoscienza.org/"},{"day":2,"name":"Базилика Сант-Амброджо","it":"Basilica di Sant'Ambrogio","ll":[45.4624,9.1754],"time":"30 мин","hist":"Церковь основал в 379–386 годах святой Амвросий, епископ Милана и покровитель города; его мощи покоятся в крипте. Нынешний облик с атриумом и двумя колокольнями сложился в XI–XII веках и стал образцом ломбардской романики. Внутри — «Золотой алтарь» мастера Вольвиния (IX век) из позолоченного серебра и драгоценных камней.","price":"Бесплатно.","paid":false,"cost":0,"tip":"Слева от базилики стоит римская «Колонна дьявола» с двумя дырами: по легенде, их оставили рога чёрта, промахнувшегося в святого Амвросия. А в начале декабря вокруг базилики шумит ярмарка «O bej! O bej!».","site":""},{"day":2,"name":"Сан-Маурицио-аль-Монастеро-Маджоре","it":"San Maurizio al Monastero Maggiore","ll":[45.4655,9.1795],"time":"30 мин","hist":"Церковь женского бенедиктинского монастыря строили с 1503 года. Её разделяет стена: в передней части молились прихожане, в задней — монахини, скрытые от глаз. Каждый сантиметр стен расписан Бернардино Луини и его учениками, поэтому церковь называют «Сикстинской капеллой Милана». В бывших монастырских зданиях рядом — Археологический музей с остатками римских стен.","price":"Бесплатно.","paid":false,"cost":0,"tip":"Обязательно пройдите в зал монахинь — проход сбоку от алтаря. Там на фреске с Ноевым ковчегом поищите среди зверей, идущих на борт, пару единорогов.","site":""},{"day":2,"name":"Амброзиана: библиотека и пинакотека","it":"Biblioteca e Pinacoteca Ambrosiana","ll":[45.4636,9.1858],"time":"1,5 ч","hist":"Кардинал Федерико Борромео основал библиотеку в 1607 году (открыта в 1609-м) — одну из первых публичных библиотек Европы, а в 1618 году — картинную галерею при ней. Здесь хранится «Атлантический кодекс» Леонардо — 1119 листов рисунков и записей, «Корзина с фруктами» Караваджо, картон Рафаэля к «Афинской школе» и «Портрет музыканта» Леонардо.","price":"17 €; выходной — среда.","paid":true,"cost":17,"tip":"Листы «Атлантического кодекса» выставляют небольшими сменными подборками, так что каждый визит немного другой. Огромный картон Рафаэля показывают в затемнённом зале — дайте глазам привыкнуть.","site":"https://www.ambrosiana.it/"},{"day":2,"name":"Санта-Мария-прессо-Сан-Сатиро","it":"Santa Maria presso San Satiro","ll":[45.4627,9.1873],"time":"15 мин","hist":"Церковь перестроил в 1476–1482 годах Донато Браманте. Для полноценного хора за алтарём не хватило места — сзади проходила улица. Тогда Браманте создал иллюзию: глубокая сводчатая апсида на самом деле — рельеф глубиной меньше метра. Это один из первых примеров перспективного обмана в архитектуре Возрождения. Рядом сохранилась капелла Сан-Сатиро IX века.","price":"Бесплатно (можно оставить пожертвование).","paid":false,"cost":0,"tip":"Сначала посмотрите на алтарь прямо от входа — апсида кажется глубокой. Потом пройдите вбок по нефу: иллюзия рассыпается на глазах. Это быстрая и очень эффектная остановка прямо на шумной виа Торино.","site":""},{"day":2,"name":"Колонны Сан-Лоренцо","it":"Colonne di San Lorenzo","ll":[45.4581,9.1813],"time":"20–30 мин","hist":"Шестнадцать коринфских колонн II–III веков перенесли сюда с римского здания в IV веке, когда строилась базилика Сан-Лоренцо-Маджоре — одна из древнейших церквей Милана, тогдашней столицы Западной Римской империи. Перед колоннами стоит статуя императора Константина (копия), издавшего в Милане в 313 году эдикт о веротерпимости.","price":"Колонны и базилика — бесплатно (капелла Сант-Аквилино с мозаиками IV века — за небольшую плату).","paid":false,"cost":0,"tip":"Зайдите в базилику и капеллу Сант-Аквилино с раннехристианскими мозаиками. Вечером площадка у колонн — место встреч миланской молодёжи, а рядом проходит трамвай 3 через ворота Порта-Тичинезе.","site":""},{"day":2,"name":"Базилика Сант-Эусторджо и капелла Портинари","it":"Basilica di Sant'Eustorgio","ll":[45.4545,9.181],"time":"40 мин","hist":"По преданию, епископ Евсторгий в IV веке привёз сюда из Константинополя мощи волхвов. В 1164 году Фридрих Барбаросса увёз их в Кёльн, и лишь в 1904 году часть мощей вернули в Милан; поэтому колокольню венчает не крест, а звезда. В капелле Портинари (1460-е), построенной для банкира Медичи, — фрески Винченцо Фоппы и мраморная гробница святого Петра Веронского.","price":"Базилика — бесплатно; музей с капеллой Портинари — около 6 €. Выходной музея — понедельник.","paid":true,"cost":6,"tip":"Капелла Портинари — одна из лучших ренессансных капелл Ломбардии, и в ней почти никогда нет толпы. А 6 января от Дуомо сюда идёт костюмированное шествие волхвов.","site":"https://www.santeustorgio.it/"},{"day":2,"name":"Дарсена — старый порт Милана","it":"Darsena","ll":[45.453,9.1765],"time":"30 мин","hist":"Портовый бассейн появился в 1603 году при испанском губернаторе Фуэнтесе там, где сходятся каналы Навильо-Гранде и Навильо-Павезе. По каналам в город веками везли грузы — в том числе мрамор для Дуомо. После упадка в XX веке Дарсену расчистили и благоустроили к выставке Expo 2015; теперь это набережная для прогулок.","price":"Бесплатно.","paid":false,"cost":0,"tip":"На краю площади XXIV Мая работает крытый рынок Mercato Comunale — удобно перекусить. С набережной хорошо видны старые ворота Порта-Тичинезе.","site":""},{"day":2,"name":"Навильо-Гранде и Виколо-дей-Лавандаи","it":"Naviglio Grande · Vicolo dei Lavandai","ll":[45.4505,9.1725],"time":"1 ч и вечер","hist":"Навильо-Гранде прокопали в XII–XIII веках от реки Тичино — это один из древнейших судоходных каналов Европы. В переулке Виколо-дей-Лавандаи до 1950-х годов прачки стирали бельё прямо в канале на каменных плитах, стоя на коленях в деревянных ящиках; плиты и навес сохранились.","price":"Бесплатно.","paid":false,"cost":0,"tip":"Закончите маршрут здесь в час аперитива (примерно с 18:00), когда вдоль канала зажигаются бары. В последнее воскресенье месяца вдоль Навильо-Гранде работает большой антикварный рынок.","site":""}];
+const SCHEME={"rings":[{"p":[[45.4746,9.2052],[45.479,9.1935],[45.4808,9.1847],[45.4757,9.1726],[45.467,9.168],[45.458,9.168],[45.452,9.1805],[45.4495,9.187],[45.451,9.1985],[45.4518,9.204],[45.4625,9.2075],[45.468,9.2075],[45.4746,9.2052]],"w":4},{"p":[[45.4735,9.187],[45.4736,9.192],[45.471,9.1975],[45.4675,9.2],[45.463,9.2005],[45.459,9.1975],[45.456,9.1925],[45.456,9.184],[45.4585,9.178],[45.463,9.1755],[45.467,9.1765],[45.469,9.18],[45.4715,9.1835],[45.4735,9.187]],"w":3,"dash":"1 0"}],"water":[{"p":[[45.4522,9.1748],[45.45,9.17],[45.4475,9.164],[45.445,9.156],[45.442,9.146]],"w":6},{"p":[[45.4512,9.1772],[45.445,9.1775],[45.438,9.176],[45.43,9.175]],"w":6}],"areas":[{"p":[[45.4757,9.1726],[45.4775,9.176],[45.4728,9.1825],[45.4708,9.1795],[45.4735,9.1715]],"c":"#8cbf7a"},{"p":[[45.4775,9.196],[45.477,9.2035],[45.473,9.2045],[45.4725,9.199]],"c":"#8cbf7a"},{"p":[[45.4545,9.1765],[45.4535,9.1792],[45.451,9.178],[45.452,9.175]],"c":"#7fb2c9"},{"p":[[45.4712,9.1782],[45.4712,9.1808],[45.4698,9.1808],[45.4698,9.1782]],"c":"#c7a37a"},{"p":[[45.4648,9.1895],[45.4648,9.1925],[45.4636,9.1925],[45.4636,9.1895]],"c":"#d8c6b8"}],"labels":[{"ll":[45.4728,9.1868],"t":"\u0411\u0440\u0435\u0440\u0430"},{"ll":[45.4485,9.1685],"t":"\u041d\u0430\u0432\u0438\u043b\u044c\u0438"},{"ll":[45.4826,9.1925],"t":"\u041f\u043e\u0440\u0442\u0430-\u041d\u0443\u043e\u0432\u0430"},{"ll":[45.474,9.1768],"t":"\u043f\u0430\u0440\u043a \u0421\u0435\u043c\u043f\u0438\u043e\u043d\u0435"},{"ll":[45.4752,9.2003],"t":"\u0441\u0430\u0434\u044b \u041c\u043e\u043d\u0442\u0430\u043d\u0435\u043b\u043b\u0438"},{"ll":[45.459,9.183],"t":"\u0422\u0438\u0447\u0438\u043d\u0435\u0437\u0435"},{"ll":[45.465,9.1735],"t":"\u041c\u0430\u0434\u0436\u0435\u043d\u0442\u0430"},{"ll":[45.4525,9.202],"t":"\u041f\u043e\u0440\u0442\u0430-\u0420\u043e\u043c\u0430\u043d\u0430"},{"ll":[45.466,9.1985],"t":"\u0421\u0430\u043d-\u0411\u0430\u0431\u0438\u043b\u0430"}]};
+STOPS.forEach((s,i)=>s.n=i+1);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const dayColor=d=>css(d===1?"--d1":"--d2");
+const hav=(a,b)=>{const r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r,h=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 6371*2*Math.asin(Math.sqrt(h))};
+const WALK=1.3; // streets are longer than a straight line
+const dayKm=d=>{const p=STOPS.filter(s=>s.day===d).map(s=>s.ll);let k=0;for(let i=1;i<p.length;i++)k+=hav(p[i-1],p[i]);return k*WALK};
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const fmt=n=>n.toLocaleString("ru-RU",{maximumFractionDigits:1});
+
+/* ---------- map ---------- */
+const map=L.map("map",{zoomSnap:.25,zoomControl:true,attributionControl:true}).setView([45.466,9.183],14);
+map.attributionControl.setPrefix(false);
+// fallback sketch of the centre, shown when street tiles can't load (offline or inside the preview)
+const sketch=L.layerGroup();
+SCHEME.water.forEach(l=>L.polyline(l.p,{color:"#7fb2c9",weight:l.w||5,opacity:.9,interactive:false}).addTo(sketch));
+SCHEME.areas.forEach(a=>L.polygon(a.p,{color:a.c,weight:1,fillColor:a.c,fillOpacity:.35,interactive:false}).addTo(sketch));
+SCHEME.rings.forEach(r=>L.polyline(r.p,{color:"#b9aeb3",weight:r.w,opacity:.9,interactive:false,dashArray:r.dash||null}).addTo(sketch));
+SCHEME.labels.forEach(t=>L.tooltip({permanent:true,direction:"center",className:"slbl",interactive:false}).setLatLng(t.ll).setContent(t.t).addTo(sketch));
+let tilesOk=0,tilesBad=0,noteEl=null;
+const tiles=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:19,attribution:"© участники OpenStreetMap"});
+tiles.on("tileload",()=>{tilesOk++;if(noteEl&&tilesOk>2){noteEl.remove();noteEl=null;map.removeLayer(sketch)}});
+tiles.on("tileerror",()=>{tilesBad++;if(tilesBad===3&&tilesOk===0){sketch.addTo(map);sketch.eachLayer(l=>l.bringToBack&&l.bringToBack());
+  noteEl=L.DomUtil.create("div","mapnote",map.getContainer());noteEl.innerHTML="Уличная карта не загрузилась, показана упрощённая схема центра. <b>Скрыть ×</b>";noteEl.title="Скрыть";
+  L.DomEvent.disableClickPropagation(noteEl);noteEl.onclick=()=>{noteEl.remove();noteEl=null}}});
+tiles.addTo(map);
+setTimeout(()=>{if(tilesOk===0&&!map.hasLayer(sketch)){tilesBad=2;tiles.fire("tileerror")}},4000);
+
+const routes={};
+[1,2].forEach(d=>{
+  const p=STOPS.filter(s=>s.day===d).map(s=>s.ll);
+  routes[d]=L.featureGroup([
+    L.polyline(p,{color:"#fff",weight:7,opacity:.8,interactive:false}),
+    L.polyline(p,{color:dayColor(d),weight:4,opacity:.95,dashArray:"2 9",lineCap:"round",interactive:false})
+  ]).addTo(map);
+});
+const pinIcon=(s,state)=>L.divIcon({className:"",iconSize:state==="on"?[36,36]:[28,28],iconAnchor:state==="on"?[18,36]:[14,28],
+  html:`<div class="pin ${state||""}" style="background:${dayColor(s.day)}"><span>${s.n}</span></div>`});
+STOPS.forEach(s=>{
+  s.m=L.marker(s.ll,{icon:pinIcon(s),title:s.name,riseOnHover:true}).addTo(map);
+  s.m.bindTooltip(`${s.n}. ${esc(s.name)}`,{direction:"top",offset:[0,-28],className:"tt"});
+  s.m.on("click",()=>openStop(s.n-1,false));
+});
+
+/* ---------- panel ---------- */
+let DAY=0,CUR=-1,listScroll=0;
+const $=id=>document.getElementById(id);
+$("facts").innerHTML=`<span><b>${STOPS.length}</b> точка</span><span>день 1 ≈ <b>${fmt(dayKm(1))} км</b></span><span>день 2 ≈ <b>${fmt(dayKm(2))} км</b></span><span>все платные ≈ <b>${STOPS.reduce((a,s)=>a+s.cost,0)} €</b></span>`;
+function visible(s){return !DAY||s.day===DAY}
+function refreshPins(){
+  STOPS.forEach((s,i)=>{s.m.setIcon(pinIcon(s,i===CUR?"on":visible(s)?"":"dim"));s.m.setZIndexOffset(i===CUR?1000:0)});
+  [1,2].forEach(d=>routes[d].eachLayer(l=>l.setStyle({opacity:!DAY||DAY===d?(l.options.color==="#fff"?.8:.95):.15})));
+}
+function fitDay(){
+  const p=STOPS.filter(visible).map(s=>s.ll);
+  map.fitBounds(p,{padding:[40,40],maxZoom:16});
+}
+function renderList(){
+  CUR=-1;refreshPins();
+  let h="";
+  [1,2].forEach(d=>{
+    if(DAY&&DAY!==d)return;
+    const st=STOPS.filter(s=>s.day===d);
+    h+=`<div class="dayh"><h2>День ${d}</h2><span>${st.length} точек · ≈ ${fmt(dayKm(d))} км пешком</span></div><ol class="stops">`+
+      st.map(s=>`<li><button data-i="${s.n-1}"><span class="num" style="background:var(${d===1?"--d1":"--d2"})">${s.n}</span><span class="nm"><b>${esc(s.name)}</b><small>${esc(s.it)}</small></span><span class="tag ${s.paid?"paid":"free"}">${s.paid?"от "+s.cost+" €":"бесплатно"}</span></button></li>`).join("")+`</ol>`;
+  });
+  h+=`<p class="note">Цены — за взрослый билет, по данным официальных сайтов и путеводителей на октябрь 2026 года; перед поездкой стоит перепроверить. Пунктир на карте соединяет точки по прямой: реальный путь по улицам примерно на треть длиннее, это учтено в километрах.</p>`;
+  $("scroll").innerHTML=h;$("scroll").scrollTop=listScroll;
+  $("scroll").querySelectorAll(".stops button").forEach(b=>b.onclick=()=>{listScroll=$("scroll").scrollTop;openStop(+b.dataset.i,true)});
+}
+function openStop(i,fly){
+  CUR=i;const s=STOPS[i];refreshPins();
+  const dc=s.day===1?"--d1":"--d2";
+  const prev=i>0?STOPS[i-1]:null,next=i<STOPS.length-1?STOPS[i+1]:null;
+  const legKm=prev&&prev.day===s.day?hav(prev.ll,s.ll)*WALK:null;
+  $("scroll").innerHTML=`<article class="card" style="--dc:var(${dc})">
+    <div class="nav"><button id="back">← Весь список</button><span class="sp"></span>
+      <button id="prev" ${prev?"":"disabled"} aria-label="Предыдущая точка">←</button><button id="next" ${next?"":"disabled"} aria-label="Следующая точка">→</button></div>
+    <div class="top"><span class="num" style="background:var(${dc})">${s.n}</span><div><h2>${esc(s.name)}</h2><p class="it">${esc(s.it)}</p></div></div>
+    <div class="meta"><span>День ${s.day}</span><span>На посещение: ${esc(s.time)}</span>${legKm?`<span>от точки ${s.n-1}: ≈ ${fmt(legKm)} км, ${Math.max(3,Math.round(legKm/4.5*60))} мин пешком</span>`:""}</div>
+    <section class="sec"><h3>Историческая справка</h3><p>${esc(s.hist)}</p></section>
+    <section class="sec price"><h3>Стоимость</h3><p>${esc(s.price)}</p></section>
+    <section class="sec tip"><h3>От меня</h3><p>${esc(s.tip)}</p></section>
+    ${s.site?`<a href="${s.site}" target="_blank" rel="noopener">Официальный сайт ↗</a>`:""}
+  </article>`;
+  $("scroll").scrollTop=0;
+  $("back").onclick=()=>{renderList();fitDay()};
+  $("prev").onclick=()=>openStop(i-1,true);$("next").onclick=()=>openStop(i+1,true);
+  if(fly||!map.getBounds().pad(-.2).contains(s.ll))map.flyTo(s.ll,Math.max(map.getZoom(),15.5),{duration:.6});
+}
+document.querySelectorAll(".days button").forEach(b=>b.onclick=()=>{
+  DAY=+b.dataset.d;document.querySelectorAll(".days button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  listScroll=0;renderList();fitDay();
+});
+document.addEventListener("keydown",e=>{if(CUR<0||e.target.closest("input"))return;if(e.key==="ArrowRight"&&CUR<STOPS.length-1)openStop(CUR+1,true);if(e.key==="ArrowLeft"&&CUR>0)openStop(CUR-1,true);if(e.key==="Escape"){renderList();fitDay()}});
+renderList();fitDay();
+</script>
+
+</body>
+</html>
